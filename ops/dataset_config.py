@@ -1,3 +1,4 @@
+
 # Code for "TSM: Temporal Shift Module for Efficient Video Understanding"
 # arXiv:1811.08383
 # Ji Lin*, Chuang Gan, Song Han
@@ -5,7 +6,7 @@
 
 import os
 
-ROOT_DATASET = '/ssd/video/'  # '/data/jilin/'
+ROOT_DATASET = '/vulcan/scratch/hao/data'  
 
 
 def return_ucf101(modality):
@@ -43,16 +44,16 @@ def return_hmdb51(modality):
 
 
 def return_something(modality):
-    filename_categories = 'something/v1/category.txt'
+    filename_categories = 'sthv1/category.txt'
     if modality == 'RGB':
-        root_data = ROOT_DATASET + 'something/v1/20bn-something-something-v1'
-        filename_imglist_train = 'something/v1/train_videofolder.txt'
-        filename_imglist_val = 'something/v1/val_videofolder.txt'
+        root_data = ROOT_DATASET 
+        filename_imglist_train = 'sthv1/train_videofolder.txt'
+        filename_imglist_val = 'sthv1/val_videofolder.txt'
         prefix = '{:05d}.jpg'
     elif modality == 'Flow':
-        root_data = ROOT_DATASET + 'something/v1/20bn-something-something-v1-flow'
-        filename_imglist_train = 'something/v1/train_videofolder_flow.txt'
-        filename_imglist_val = 'something/v1/val_videofolder_flow.txt'
+        root_data = ROOT_DATASET + 'sthv1/20bn-something-something-v1-flow'
+        filename_imglist_train = 'sthv1/train_videofolder_flow.txt'
+        filename_imglist_val = 'sthv1/val_videofolder_flow.txt'
         prefix = '{:06d}-{}_{:05d}.jpg'
     else:
         print('no such modality:'+modality)
@@ -60,22 +61,68 @@ def return_something(modality):
     return filename_categories, filename_imglist_train, filename_imglist_val, root_data, prefix
 
 
-def return_somethingv2(modality):
-    filename_categories = 'something/v2/category.txt'
+def return_orig_something(modality):
+    filename_categories = 174
     if modality == 'RGB':
-        root_data = ROOT_DATASET + 'something/v2/20bn-something-something-v2-frames'
-        filename_imglist_train = 'something/v2/train_videofolder.txt'
-        filename_imglist_val = 'something/v2/val_videofolder.txt'
-        prefix = '{:06d}.jpg'
+        root_data = ROOT_DATASET 
+        filename_imglist_train = 'sthv1/orig_train_videofolder.txt'
+        filename_imglist_val = 'sthv1/orig_val_videofolder.txt'
+        prefix = '{:05d}.jpg'
     elif modality == 'Flow':
-        root_data = ROOT_DATASET + 'something/v2/20bn-something-something-v2-flow'
-        filename_imglist_train = 'something/v2/train_videofolder_flow.txt'
-        filename_imglist_val = 'something/v2/val_videofolder_flow.txt'
-        prefix = '{:06d}.jpg'
+        root_data = ROOT_DATASET + 'sthv1/20bn-something-something-v1-flow'
+        filename_imglist_train = 'sthv1/train_videofolder_flow.txt'
+        filename_imglist_val = 'sthv1/val_videofolder_flow.txt'
+        prefix = '{:06d}-{}_{:05d}.jpg'
     else:
-        raise NotImplementedError('no such modality:'+modality)
+        print('no such modality:'+modality)
+        raise NotImplementedError
     return filename_categories, filename_imglist_train, filename_imglist_val, root_data, prefix
 
+def return_charades(modality):
+    filename_categories = 157
+    if modality == 'RGB':
+        root_data = ROOT_DATASET 
+        filename_imglist_train = 'charades/annotation/train_video.txt'
+        filename_imglist_val = 'charades/annotation/val_video.txt'
+        prefix = '{:06d}.jpg'
+    else:
+        print('no such modality:'+modality)
+        raise NotImplementedError
+    return filename_categories, filename_imglist_train, filename_imglist_val, root_data, prefix
+
+def return_diving(modality):
+    filename_categories = 48
+    if modality == 'RGB':
+        root_data = ROOT_DATASET 
+        filename_imglist_train = 'diving/train_list.txt'
+        filename_imglist_val = 'diving/val_list.txt'
+        prefix = '{:05d}.jpg'
+    else:
+        print('no such modality:'+modality)
+        raise NotImplementedError
+    return filename_categories, filename_imglist_train, filename_imglist_val, root_data, prefix
+
+def return_kinetics_200(modality):
+    filename_categories = 200
+    if modality == 'RGB':
+        root_data = os.path.join(ROOT_DATASET, 'kinetics')
+        filename_imglist_train = 'kinetics/annotation/kinetics_200_train.txt'
+        filename_imglist_val = 'kinetics/annotation/kinetics_200_val.txt'
+        prefix = 'img_{:05d}.jpg'
+    else:
+        raise NotImplementedError('no such modality:' + modality)
+    return filename_categories, filename_imglist_train, filename_imglist_val, root_data, prefix
+
+def return_kinetics_400(modality):
+    filename_categories = 400
+    if modality == 'RGB':
+        root_data = os.path.join(ROOT_DATASET, 'kinetics')
+        filename_imglist_train = 'kinetics/annotation/kinetics_400_train.txt'
+        filename_imglist_val = 'kinetics/annotation/kinetics_400_val.txt'
+        prefix = 'img_{:05d}.jpg'
+    else:
+        raise NotImplementedError('no such modality:' + modality)
+    return filename_categories, filename_imglist_train, filename_imglist_val, root_data, prefix
 
 def return_jester(modality):
     filename_categories = 'jester/category.txt'
@@ -88,23 +135,11 @@ def return_jester(modality):
         raise NotImplementedError('no such modality:'+modality)
     return filename_categories, filename_imglist_train, filename_imglist_val, root_data, prefix
 
-
-def return_kinetics(modality):
-    filename_categories = 400
-    if modality == 'RGB':
-        root_data = ROOT_DATASET + 'kinetics/images'
-        filename_imglist_train = 'kinetics/labels/train_videofolder.txt'
-        filename_imglist_val = 'kinetics/labels/val_videofolder.txt'
-        prefix = 'img_{:05d}.jpg'
-    else:
-        raise NotImplementedError('no such modality:' + modality)
-    return filename_categories, filename_imglist_train, filename_imglist_val, root_data, prefix
-
-
 def return_dataset(dataset, modality):
-    dict_single = {'jester': return_jester, 'something': return_something, 'somethingv2': return_somethingv2,
-                   'ucf101': return_ucf101, 'hmdb51': return_hmdb51,
-                   'kinetics': return_kinetics }
+    dict_single = {'jester': return_jester, 'something': return_something, 
+                   'ucf101': return_ucf101, 'hmdb51': return_hmdb51, 'diving': return_diving,
+                   'kinetics_200': return_kinetics_200, 'kinetics_400': return_kinetics_400, 
+                   'charades': return_charades, 'orig_something': return_orig_something}
     if dataset in dict_single:
         file_categories, file_imglist_train, file_imglist_val, root_data, prefix = dict_single[dataset](modality)
     else:

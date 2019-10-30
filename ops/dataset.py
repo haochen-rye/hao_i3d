@@ -4,12 +4,11 @@
 # {jilin, songhan}@mit.edu, ganchuang@csail.mit.edu
 
 import torch.utils.data as data
-
 from PIL import Image
 import os
 import numpy as np
 from numpy.random import randint
-
+USE_TEMPORAL_JITTERING = False
 
 class VideoRecord(object):
     def __init__(self, row):
@@ -22,11 +21,18 @@ class VideoRecord(object):
     @property
     def num_frames(self):
         return int(self._data[1])
-
+   
     @property
     def label(self):
-        return int(self._data[2])
-
+        label = self._data[2]
+        if ',' in label:
+            label_list = np.zeros(157)
+            for i in label.split(',')[:-1]:
+                if i:
+                    label_list[int(i)] = 1
+            return(label_list)
+        else:
+            return int(label)
 
 class TSNDataSet(data.Dataset):
     def __init__(self, root_path, list_file,
@@ -48,6 +54,8 @@ class TSNDataSet(data.Dataset):
         self.dense_sample = dense_sample  # using dense sample as I3D
         if self.dense_sample:
             print('=> Using dense sample for the dataset...')
+        if USE_TEMPORAL_JITTERING:
+            print('Using temporal jittering for the dataset...')
 
         if self.modality == 'RGBDiff':
             self.new_length += 1  # Diff needs one more image to calculate diff
@@ -115,12 +123,16 @@ class TSNDataSet(data.Dataset):
         else:  # normal sample
             average_duration = (record.num_frames - self.new_length + 1) // self.num_segments
             if average_duration > 0:
-                offsets = np.multiply(list(range(self.num_segments)), average_duration) + randint(average_duration,
-                                                                                                  size=self.num_segments)
+                offsets = np.multiply(list(range(self.num_segments)), average_duration) + \
+                    randint(average_duration, size=self.num_segments)
             elif record.num_frames > self.num_segments:
                 offsets = np.sort(randint(record.num_frames - self.new_length + 1, size=self.num_segments))
             else:
                 offsets = np.zeros((self.num_segments,))
+            if USE_TEMPORAL_JITTERING:
+                # print('using temporal jittering')
+                offsets[0]=0
+                offsets[-1]=record.num_frames-1
             return offsets + 1
 
     def _get_val_indices(self, record):
@@ -136,6 +148,10 @@ class TSNDataSet(data.Dataset):
                 offsets = np.array([int(tick / 2.0 + tick * x) for x in range(self.num_segments)])
             else:
                 offsets = np.zeros((self.num_segments,))
+            if USE_TEMPORAL_JITTERING:
+                # print('using temporal jittering')
+                offsets[0]=0
+                offsets[-1]=record.num_frames-1
             return offsets + 1
 
     def _get_test_indices(self, record):
@@ -150,6 +166,10 @@ class TSNDataSet(data.Dataset):
         else:
             tick = (record.num_frames - self.new_length + 1) / float(self.num_segments)
             offsets = np.array([int(tick / 2.0 + tick * x) for x in range(self.num_segments)])
+            if USE_TEMPORAL_JITTERING:
+                # print('using temporal jittering')
+                offsets[0]=0
+                offsets[-1]=record.num_frames-1
             return offsets + 1
 
     def __getitem__(self, index):

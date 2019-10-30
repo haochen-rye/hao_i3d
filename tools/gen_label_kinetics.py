@@ -8,8 +8,11 @@
 import os
 
 
-dataset_path = '/ssd/video/kinetics/images256/'
-label_path = '/ssd/video/kinetics/labels'
+# dataset_path = '/ssd/video/kinetics/images256/'
+# label_path = '/ssd/video/kinetics/labels'
+dataset_path = '/vulcan/scratch/hao/data/kinectics/val_256'
+label_path = '/vulcan/scratch/hao/data/kinectics/annotation'
+
 
 if __name__ == '__main__':
     with open('kinetics_label_map.txt') as f:
@@ -22,8 +25,10 @@ if __name__ == '__main__':
 
     print(dict_categories)
 
-    files_input = ['kinetics_val.csv', 'kinetics_train.csv']
-    files_output = ['val_videofolder.txt', 'train_videofolder.txt']
+    files_input = ['kinetics-400_val.csv']
+    files_output = ['kinetics-400_val_videofolder.txt']
+    # files_input = ['kinetics_val.csv', 'kinetics_train.csv']
+    # files_output = ['val_videofolder.txt', 'train_videofolder.txt']
     for (filename_input, filename_output) in zip(files_input, files_output):
         count_cat = {k: 0 for k in dict_categories.keys()}
         with open(os.path.join(label_path, filename_input)) as f:
@@ -45,10 +50,12 @@ if __name__ == '__main__':
         missing_folders = []
         output = []
         for i in range(len(folders)):
-            curFolder = folders[i]
+            curFolder = folders[i].split('_')[0]
             curIDX = idx_categories[i]
             # counting the number of frames in each video folders
             img_dir = os.path.join(dataset_path, categories_list[i], curFolder)
+            from pdb import set_trace;set_trace()
+            from IPython import embed;embed()
             if not os.path.exists(img_dir):
                 missing_folders.append(img_dir)
                 # print(missing_folders)

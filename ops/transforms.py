@@ -300,18 +300,30 @@ class GroupRandomSizedCrop(object):
 
 class Stack(object):
 
-    def __init__(self, roll=False):
-        self.roll = roll
+    def __init__(self, mode='3D'):
+        self.mode = mode
 
     def __call__(self, img_group):
-        if img_group[0].mode == 'L':
-            return np.concatenate([np.expand_dims(x, 2) for x in img_group], axis=2)
-        elif img_group[0].mode == 'RGB':
-            if self.roll:
-                return np.concatenate([np.array(x)[:, :, ::-1] for x in img_group], axis=2)
-            else:
-                return np.concatenate(img_group, axis=2)
-
+        # if img_group[0].mode == 'L':
+        #     return np.concatenate([np.expand_dims(x, 2) for x in img_group], axis=2)
+        # elif img_group[0].mode == 'RGB':
+        #     if self.roll:
+        #         return np.concatenate([np.array(x)[:, :, ::-1] for x in img_group], axis=2)
+        #     else:
+        #         return np.concatenate(img_group, axis=2)
+        """Only support RGB mode now
+        img_group: list([h, w, c])
+        """
+        assert(img_group[0].mode == 'RGB'), "Must read images in RGB mode."
+        if "3D" in self.mode:
+            imgs = np.concatenate([np.array(img)[np.newaxis, ...] for img in img_group], axis=0)
+            imgs = torch.from_numpy(imgs).permute(3, 0, 1, 2).contiguous()
+        elif "2D" in self.mode:
+            imgs = np.concatenate([np.array(img) for img in img_group], axis=2)
+            imgs = torch.from_numpy(imgs).permute(2, 0, 1).contiguous()
+        else:
+            raise Exception("Unsupported mode.")
+        return imgs
 
 class ToTorchFormatTensor(object):
     """ Converts a PIL.Image (RGB) or numpy.ndarray (H x W x C) in the range [0, 255]
@@ -319,19 +331,21 @@ class ToTorchFormatTensor(object):
     def __init__(self, div=True):
         self.div = div
 
-    def __call__(self, pic):
-        if isinstance(pic, np.ndarray):
-            # handle numpy array
-            img = torch.from_numpy(pic).permute(2, 0, 1).contiguous()
-        else:
-            # handle PIL Image
-            img = torch.ByteTensor(torch.ByteStorage.from_buffer(pic.tobytes()))
-            img = img.view(pic.size[1], pic.size[0], len(pic.mode))
-            # put it from HWC to CHW format
-            # yikes, this transpose takes 80% of the loading time/CPU
-            img = img.transpose(0, 1).transpose(0, 2).contiguous()
-        return img.float().div(255) if self.div else img.float()
-
+    # def __call__(self, pic):
+    #     if isinstance(pic, np.ndarray):
+    #         # handle numpy array
+    #         img = torch.from_numpy(pic).permute(2, 0, 1).contiguous()
+    #     else:
+    #         # handle PIL Image
+    #         img = torch.ByteTensor(torch.ByteStorage.from_buffer(pic.tobytes()))
+    #         img = img.view(pic.size[1], pic.size[0], len(pic.mode))
+    #         # put it from HWC to CHW format
+    #         # yikes, this transpose takes 80% of the loading time/CPU
+    #         img = img.transpose(0, 1).transpose(0, 2).contiguous()
+    #     return img.float().div(255) if self.div else img.float()
+    def __call__(self, imgs):
+        assert(isinstance(imgs, torch.Tensor)), "pic must be torch.Tensor."
+        return imgs.float().div(255) if self.div else img.float()
 
 class IdentityTransform(object):
 

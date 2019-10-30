@@ -7,7 +7,7 @@
 # processing the raw data of the video Something-Something-V2
 
 import os
-import json
+# import json
 
 if __name__ == '__main__':
     dataset_name = 'something-something-v2'  # 'jester-v1'

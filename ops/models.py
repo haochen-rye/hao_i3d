@@ -9,6 +9,7 @@ from ops.basic_ops import ConsensusModule
 from ops.transforms import *
 from torch.nn.init import normal_, constant_
 
+temporal_downsample = False
 
 class TSN(nn.Module):
     def __init__(self, num_class, num_segments, modality,
@@ -16,6 +17,9 @@ class TSN(nn.Module):
                  consensus_type='avg', before_softmax=True,
                  dropout=0.8, img_feature_dim=256,
                  crop_num=1, partial_bn=True, print_spec=True, pretrain='imagenet',
+                 fuse=False, fuse_group=1, fuse_layer=['3.03','4.0'], fuse_dilation=False,
+                 fuse_spatial_dilation=1, fuse_correlation=False, fuse_ave=False,
+                 fuse_downsample=False, correlation_neighbor=3, GroupConv=False,
                  is_shift=False, shift_div=8, shift_place='blockres', fc_lr5=False,
                  temporal_pool=False, non_local=False):
         super(TSN, self).__init__()
@@ -28,6 +32,20 @@ class TSN(nn.Module):
         self.consensus_type = consensus_type
         self.img_feature_dim = img_feature_dim  # the dimension of the CNN feature to represent each frame
         self.pretrain = pretrain
+
+        self.fuse=fuse
+        self.fuse_group = fuse_group
+        self.fuse_layer = fuse_layer
+        self.fuse_dilation = fuse_dilation
+        self.fuse_spatial_dilation = fuse_spatial_dilation
+        self.fuse_correlation = fuse_correlation
+        self.fuse_ave = fuse_ave
+        self.fuse_downsample = fuse_downsample
+        self.correlation_neighbor = correlation_neighbor
+        self.GroupConv = GroupConv
+        stride_list = [2**len(x.split('.')[1]) for x in self.fuse_layer]
+        self.temporal_stride = sum(stride_list)
+
 
         self.is_shift = is_shift
         self.shift_div = shift_div
@@ -101,7 +119,10 @@ class TSN(nn.Module):
         print('=> base model: {}'.format(base_model))
 
         if 'resnet' in base_model:
-            self.base_model = getattr(torchvision.models, base_model)(True)
+            if self.pretrain=='scratch':
+                self.base_model = getattr(torchvision.models, base_model)(False)
+            else:
+                self.base_model = getattr(torchvision.models, base_model)(True)
             if self.is_shift:
                 print('Adding temporal shift...')
                 from ops.temporal_shift import make_temporal_shift
@@ -112,6 +133,23 @@ class TSN(nn.Module):
                 print('Adding non-local module...')
                 from ops.non_local import make_non_local
                 make_non_local(self.base_model, self.num_segments)
+
+            if self.fuse:
+                print('Adding temporal fusion module...')
+                from ops.temporal_fusion import make_temporal_fusion
+                make_temporal_fusion(self.base_model, self.num_segments, n_group=self.fuse_group, 
+                    fuse_layer=self.fuse_layer, fuse_dilation=self.fuse_dilation,
+                    fuse_spatial_dilation=self.fuse_spatial_dilation,
+                    fuse_ave=self.fuse_ave, fuse_downsample=self.fuse_downsample)
+
+            if self.fuse_correlation:
+                print('Adding correlation fusion module...')
+                from ops.correlation_fusion import make_correlation_fusion
+                make_correlation_fusion(self.base_model, self.num_segments, n_group=self.fuse_group,
+                    fuse_layer=self.fuse_layer, fuse_downsample=self.fuse_downsample,
+                    fuse_dilation=self.fuse_dilation,
+                    fuse_spatial_dilation=self.fuse_spatial_dilation,
+                    correlation_neighbor=self.correlation_neighbor)
 
             self.base_model.last_layer_name = 'fc'
             self.input_size = 224
@@ -257,6 +295,10 @@ class TSN(nn.Module):
         if self.reshape:
             if self.is_shift and self.temporal_pool:
                 base_out = base_out.view((-1, self.num_segments // 2) + base_out.size()[1:])
+            elif self.fuse or self.fuse_correlation:
+                temporal_stride = self.temporal_stride if self.fuse_downsample else 1
+                base_out = base_out.view((-1, self.num_segments // temporal_stride)
+                     + base_out.size()[1:])
             else:
                 base_out = base_out.view((-1, self.num_segments) + base_out.size()[1:])
             output = self.consensus(base_out)

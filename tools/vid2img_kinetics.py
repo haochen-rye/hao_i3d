@@ -14,8 +14,8 @@ n_thread = 100
 
 
 def vid2jpg(file_name, class_path, dst_class_path):
-    if '.mp4' not in file_name:
-        return
+    # if '.mp4' not in file_name or 'mkv' not in file_name:
+    #     return
     name, ext = os.path.splitext(file_name)
     dst_directory_path = os.path.join(dst_class_path, name)
 

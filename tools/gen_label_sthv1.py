@@ -7,6 +7,7 @@
 # processing the raw data of the video Something-Something-V1
 
 import os
+os.chdir('/vulcan/scratch/hao/data/sthv1')
 
 if __name__ == '__main__':
     dataset_name = 'something-something-v1'  # 'jester-v1'
@@ -41,8 +42,8 @@ if __name__ == '__main__':
             curFolder = folders[i]
             curIDX = idx_categories[i]
             # counting the number of frames in each video folders
-            dir_files = os.listdir(os.path.join('../img', curFolder))
-            output.append('%s %d %d' % ('something/v1/img/' + curFolder, len(dir_files), curIDX))
+            dir_files = os.listdir(os.path.join('img', curFolder))
+            output.append('%s %d %d' % ('sthv1/img/' + curFolder, len(dir_files), curIDX))
             print('%d/%d' % (i, len(folders)))
         with open(filename_output, 'w') as f:
             f.write('\n'.join(output))
